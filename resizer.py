@@ -1,5 +1,6 @@
 # coding: utf-8
-import Image
+import PIL
+from PIL import Image
 import os
 import glob
 import sys
@@ -8,19 +9,23 @@ class ImageResizer(object):
 
     def search(self, directory, extension='png'):    
         self.files = glob.glob(os.path.join(directory, '*.%s' % extension))
+        self.files.sort(key=lambda f: os.path.getmtime(f), reverse=True)
 
     def base_resize(self, file, basewidth=200, extension='jpg'):        
         img = Image.open(file)
         wpercent = (basewidth / float(img.size[0]))
         hsize = int((float(img.size[1]) * float(wpercent)))
-        img = img.resize((basewidth, hsize), Image.ANTIALIAS)
+        img = img.resize((basewidth, hsize), PIL.Image.ANTIALIAS)
         fileName, fileExtension = os.path.splitext(file)
         img.save(file.replace(fileExtension, '.%s' % extension), quality=self.quality)
 
-    def do_resize(self):
+    def do_resize(self, total):
         self.search(directory=self.directory)
+        c = 1
         for f in self.files:
-            self.base_resize(f)
+		    if c <= total:
+		        self.base_resize(f)
+		    c+=1
 
     def __init__(self):
         self.quality = 90
@@ -32,4 +37,4 @@ class ImageResizer(object):
 
 if __name__ == '__main__':
     resizer = ImageResizer()
-    resizer.do_resize()
+    resizer.do_resize(4)
